@@ -2,8 +2,11 @@ package net.javainthebox.caraibe.svg;
 
 import java.util.HashMap;
 import java.util.Map;
-import javafx.scene.Group;
+
 import javafx.scene.Node;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
 
 /**
  * SVGContent express SVG content.
@@ -64,38 +67,106 @@ import javafx.scene.Node;
  *
  * note: There are many unsupport SVG element.
  * 
+ * update by yehoudie: https://github.com/yehoudie/, http://yehoudie.de
+ * - added basic clip-path support
+ * - added view box clipping
+ * - added dash array, dash offset support for line and polyline 
+ * - switched Group to Pane because of layout/sizing errors:
+ * 		Group seems to set the layout bounds to the minX element
+ * - group id map is filled
  */
-public class SVGContent extends Group {
-    private Map<String, Node> nodes = new HashMap<>();
-    private Map<String, Group> groups = new HashMap<>();
-    
-    void putNode(String id, Node node) {
-        nodes.put(id, node);
-    }
+public class SVGContent extends Pane
+{
+	private Map<String, Node> nodes = new HashMap<>();
+	private Map<String, Pane> groups = new HashMap<>();
 
-    /**
-     * Gets node object indicated by id.
-     * When there is no node indicated by id, return null.
-     * 
-     * @param id the name of node
-     * @return node  represented by id
-     */
-    public Node getNode(String id) {
-        return nodes.get(id);
-    }
-    
-    void putGroup(String id, Group group) {
-        groups.put(id, group);
-    }
+	public SVGContent()
+	{
+		this.setManaged(false);
+	}
+	
+	void putNode(String id, Node node)
+	{
+		nodes.put(id, node);
+	}
 
+	/**
+	 * Gets node object indicated by id. When there is no node indicated by id, return null.
+	 * 
+	 * @param id the name of node
+	 * @return node represented by id
+	 */
+	public Node getNode(String id)
+	{
+		return nodes.get(id);
+	}
+	
+	/**
+	 * get all the nodes of the svg content
+	 * 
+	 * @return	Map<String, Node>
+	 */
+	public Map<String, Node> getNodes()
+	{
+		return nodes;
+	}
+	
     /**
-     * Gets group object indicated by id.
-     * When there is no group indicated by id, return null.
-     * 
-     * @param id the name of group
-     * @return group represented by id
+     * put group in group map
+     *  
+     * @param	id String group id
+     * @param	group Pane the group to add
      */
-    public Group getGroup(String id) {
-        return groups.get(id);
-    }
+	void putGroup(String id, Pane group)
+	{
+		groups.put(id, group);
+	}
+
+	/**
+	 * Gets group object indicated by id. When there is no group indicated by id, return null.
+	 * 
+	 * @param id the name of group
+	 * @return group represented by id
+	 */
+	public Pane getGroup(String id)
+	{
+		return groups.get(id);
+	}
+
+	/**
+	 * change fill of a node
+	 * 
+	 * @param id String the node id
+	 * @param color String the rgb hex color
+	 */
+	public void setFill(String id, String color)
+	{
+		setFill(id, Color.web(color));
+	}
+
+	/**
+	 * change fill of a {@code Node}
+	 * 
+	 * @param id String the node id
+	 * @param color Color the color
+	 */
+	public void setFill(String id, Color color)
+	{
+		Node node = getNode(id);
+		if ( node == null ) return;
+
+		colorNode(node, color);
+	}
+
+	/**
+	 * color a node
+	 * 
+	 * @param node Node the node to color
+	 * @param color Color the color to set
+	 */
+	public void colorNode(Node node, Color color)
+	{
+		Shape shape = (Shape) node;
+		shape.setFill(color);
+	}
 }
