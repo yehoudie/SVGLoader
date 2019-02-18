@@ -7,12 +7,7 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLStreamException;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
 /**
  * SVGLoader is a class for loading SVG file.
@@ -31,38 +26,66 @@ public class SVGLoader
 	}
 
 	/**
-	 * Load SVG file and convert it to JavaFX shpapes.
+	 * Load SVG file and convert it to JavaFX shapes.
 	 * 
-	 * @param	url String The location of SVG file
+	 * @param	path String The location of SVG file
 	 * @return	SVGContent an object that indicates SVG content
 	 */
-	public static SVGContent load(String url)
+	public static SVGContent load(String path)
 	{
 		SVGContent root = null;
 
-		URL tempUrl = null;
+		URL url;
 		try
 		{
-			tempUrl = new URL(url);
+			url = getUrl(path);
+			root = build(root, url);
+		}
+		catch ( Exception e )
+		{
+//			e.printStackTrace();
+		}
+
+		return root;
+	}
+
+	private static URL getUrl(String path) throws Exception
+	{
+		URL url = null;
+		try
+		{
+			url = new URL(path);
 		}
 		catch ( MalformedURLException ex )
 		{
-			tempUrl = SVGLoader.class.getResource(url);
-			if ( tempUrl == null )
+			url = SVGLoader.class.getResource(path);
+			if ( url == null )
 			{
 				try
 				{
-					tempUrl = new File(url).toURI().toURL();
+					url = new File(path).toURI().toURL();
 				}
-				catch ( final MalformedURLException ex1 )
+				catch ( final MalformedURLException e )
 				{
-					Logger.getLogger(SVGLoader.class.getName()).log(Level.SEVERE, null, ex1);
-					return root;
+					Logger.getLogger(SVGLoader.class.getName()).log(Level.SEVERE, null, e);
+					throw new Exception("Could not parse an URL out of: "+path);
 				}
 			}
 		}
+		return url;
+	}
+
+	/**
+	 * Build the svg.
+	 * 
+	 * @param	root SVGContent
+	 * @param	url URL the url of the svg file
+	 * @return
+	 */
+	protected static SVGContent build(SVGContent root, URL url)
+	{
+		SVGContentBuilder builder = new SVGContentBuilder(url);
 		
-		SVGContentBuilder builder = new SVGContentBuilder(tempUrl);
 		try
 		{
 			root = builder.build();
@@ -71,7 +94,7 @@ public class SVGLoader
 		{
 			Logger.getLogger(SVGLoader.class.getName()).log(Level.SEVERE, null, ex);
 		}
-
+		
 		return root;
 	}
 	
@@ -99,20 +122,12 @@ public class SVGLoader
 			}
 		}
 		
-		SVGContentBuilder builder = new SVGContentBuilder(tempUrl);
-		try
-		{
-			root = builder.build();
-		}
-		catch ( IOException | XMLStreamException ex )
-		{
-			Logger.getLogger(SVGLoader.class.getName()).log(Level.SEVERE, null, ex);
-		}
+		root = build(root, tempUrl);
 		
 		return root;
 	}
 
-	public static SVGContent loadXMLDoc(String url)
+	/*public static SVGContent loadXMLDoc(String url)
 	{
 		System.out.println("SVGLoader.loadXMLDoc("+url+")");
 
@@ -135,5 +150,5 @@ public class SVGLoader
 			e.printStackTrace();
 		}
 		return null;
-	}
+	}*/
 }

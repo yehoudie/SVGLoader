@@ -28,12 +28,12 @@ public class Use
 	public Use() {}
 	
 	/**
-	 * a use param holder
+	 * A {@code <use>} tag parameter holder and builder.
 	 * 
-	 * @param href_element StartElement the used referenced element
-	 * @param shape_builder ShapeBuilderCallback a callback to build the used shape
-	 * @param use_element StartElement the element to get the attributes of
-	 * @param	builder SVGContentBuilder the svg content buidler to call functions of 
+	 * @param	use_element StartElement the {@code <use>} element
+	 * @param	href_element StartElement the reference
+	 * @param	shape_builder ShapeBuilderCallback a callback to build the shape
+	 * @param	builder SVGContentBuilder reference back to the supporting content builder
 	 */
 	public Use(StartElement use_element, StartElement href_element, ShapeBuilderCallback shape_builder, SVGContentBuilder builder)
 	{
@@ -74,6 +74,11 @@ public class Use
 		if ( stroke_miterlimit_attribute != null ) this.stroke_miterlimit = Double.valueOf( stroke_miterlimit_attribute.getValue() );
 	}
 
+	/**
+	 * Build a new element using the saved parameters.
+	 * 
+	 * @return	Node
+	 */
 	public Node build()
 	{
 		Node node = null;
@@ -108,26 +113,16 @@ public class Use
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("{ ")
-			.append("href_element: ")
-			.append(href_element)
-			.append(", shape_builder: ")
-			.append(shape_builder)
-			.append(", overflow: ")
-			.append(overflow)
-			.append(", href: ")
-			.append(href)
-			.append(", clip_rule: ")
-			.append(clip_rule)
-			.append(", stroke_width: ")
-			.append(stroke_width)
-			.append(", fill: ")
-			.append(fill)
-			.append(", fill_rule: ")
-			.append(fill_rule)
-			.append(", stroke: ")
-			.append(stroke)
-			.append(", stroke_miterlimit: ")
-			.append(stroke_miterlimit)
+			.append("href_element: ").append(href_element)
+			.append(", shape_builder: ").append(shape_builder)
+			.append(", overflow: ").append(overflow)
+			.append(", href: ").append(href)
+			.append(", clip_rule: ").append(clip_rule)
+			.append(", stroke_width: ").append(stroke_width)
+			.append(", fill: ").append(fill)
+			.append(", fill_rule: ").append(fill_rule)
+			.append(", stroke: ").append(stroke)
+			.append(", stroke_miterlimit: ").append(stroke_miterlimit)
 			.append(" }");
 
 		return sb.toString();

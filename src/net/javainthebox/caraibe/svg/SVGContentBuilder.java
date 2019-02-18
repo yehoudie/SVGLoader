@@ -13,6 +13,16 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.Characters;
+import javax.xml.stream.events.EndElement;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
+
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
@@ -38,11 +48,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Transform;
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.*;
+import net.javainthebox.caraibe.svg.attributes.Attributes;
+import net.javainthebox.caraibe.svg.attributes.Display;
 
 public class SVGContentBuilder
 {
@@ -62,14 +69,14 @@ public class SVGContentBuilder
 	private ShapeBuilderCallback createPolygonCb;
 	private ShapeBuilderCallback createLineCb;
 	private ShapeBuilderCallback createPolylineCb;
-	private ShapeBuilderCallback createTextCb;
+//	private ShapeBuilderCallback createTextCb;
 	private ShapeBuilderCallback createImageCb;
-	private ShapeBuilderCallback createGroupCb;
-	private ShapeBuilderCallback createLinearGradientCb;
-	private ShapeBuilderCallback createRadialGradientCb;
+//	private ShapeBuilderCallback createGroupCb;
+//	private ShapeBuilderCallback createLinearGradientCb;
+//	private ShapeBuilderCallback createRadialGradientCb;
 
 	/**
-	 * an svg builder
+	 * An SVG builder.
 	 * 
 	 * @param	url URL the url of the svg file
 	 */
@@ -86,8 +93,8 @@ public class SVGContentBuilder
 	}
 	
 	/**
-	 * initialize callbacks used in Use to build elements, when needen
-	 * because shapes can't be cloned
+	 * Initialize callbacks used in Use to build elements, when needed,<br>
+	 * because shapes can't be cloned.
 	 */
 	private void initCallbacks()
 	{
@@ -98,15 +105,15 @@ public class SVGContentBuilder
 		createPolygonCb = (XMLEventReader reader, StartElement element)-> buildPolygon(element);
 		createLineCb = (XMLEventReader reader, StartElement element)-> buildLine(element);
 		createPolylineCb = (XMLEventReader reader, StartElement element)-> buildPolyline(element);
-		createTextCb = (XMLEventReader reader, StartElement element)-> buildText(reader, element);
+//		createTextCb = (XMLEventReader reader, StartElement element)-> buildText(reader, element);
 		createImageCb = (XMLEventReader reader, StartElement element)-> buildImage(reader, element);
-		createGroupCb = (XMLEventReader reader, StartElement element)-> buildGroup(reader, element);
-		createLinearGradientCb = (XMLEventReader reader, StartElement element)-> buildLinearGradient(reader, element);
-		createRadialGradientCb = (XMLEventReader reader, StartElement element)-> buildRadialGradient(reader, element);
+//		createGroupCb = (XMLEventReader reader, StartElement element)-> buildGroup(reader, element);
+//		createLinearGradientCb = (XMLEventReader reader, StartElement element)-> buildLinearGradient(reader, element);
+//		createRadialGradientCb = (XMLEventReader reader, StartElement element)-> buildRadialGradient(reader, element);
 	}
 
 	/**
-	 * build the svg
+	 * Build the svg.
 	 * 
 	 * @return	SVGContent
 	 * @throws	IOException
@@ -123,30 +130,57 @@ public class SVGContentBuilder
 		{
 			reader = factory.createXMLEventReader(bufferedStream);
 
+			// build svg
 			eventLoop(reader, root);
 			reader.close();
 		}
 
-		if ( doc_data != null )
-		{
-			// clip whole svg with viewBox attribute
-			if ( doc_data.viewBox != null )
-			{
-				Bounds view_box_data = doc_data.viewBox;
-				Rectangle view_box = new Rectangle(	view_box_data.getMinX(), 
-													view_box_data.getMinY(), 
-													view_box_data.getWidth(), 
-													view_box_data.getHeight());
-//				root.getChildren().add( view_box ); // test
-				root.setClip( view_box );
-			}
-		}
+		applyDocData();
 		
 		return root;
 	}
 
+	private void applyDocData()
+	{
+		if ( doc_data != null )
+		{
+			addStage();
+			applyViewBox();
+		}
+	}
+
 	/**
-	 * iterate through the svg and build its contents
+	 * Add svg stage as invisible bg. 
+	 */
+	private void addStage()
+	{
+		if ( doc_data.width > 0 && doc_data.height > 0 )
+		{
+			Rectangle stage = new Rectangle(doc_data.width, doc_data.height, Color.TRANSPARENT);
+			root.getChildren().add(0, stage); // test
+		}
+	}
+
+	/**
+	 * Apply view Box values as clipping.
+	 */
+	private void applyViewBox()
+	{
+		if ( doc_data.viewBox != null )
+		{
+			Bounds view_box_data = doc_data.viewBox;
+			Rectangle view_box = new Rectangle(	view_box_data.getMinX(), 
+												view_box_data.getMinY(), 
+												view_box_data.getWidth(), 
+												view_box_data.getHeight());
+//			view_box.setOpacity(0.5);
+//			root.getChildren().add( view_box ); // test
+			root.setClip(view_box);
+		}
+	}
+
+	/**
+	 * Iterate through the svg and build its contents.
 	 * 
 	 * @param	reader XMLEventReader the xml event reader to loop through
 	 * @param	group Pane the instance to hold the shapes
@@ -232,6 +266,7 @@ public class SVGContentBuilder
 						setShapeStyle((Shape) node, element);
 					}
 
+					setDisplay(node, element);
 					setOpacity(node, element);
 					setTransform(node, element);
 					setClipPath(node, element);
@@ -252,13 +287,13 @@ public class SVGContentBuilder
 	}
 
 	/**
-	 * get the svg document date
-	 * like
-	 *  <svg version="1.1" id="Ebene_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 * width="587px" height="441px" viewBox="0 0 587 441" enable-background="new 0 0 587 441" xml:space="preserve">
+	 * Get the svg document data<br>
+	 * like<br>
+	 *  {@code<svg version="1.1" id="Ebene_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 * width="587px" height="441px" viewBox="0 0 587 441" enable-background="new 0 0 587 441" xml:space="preserve">}.
 	 * 
-	 * @param element StartElement the <svg> element
-	 * @return 
+	 * @param	element StartElement the {@code <svg>} element
+	 * @return	SVGDocumentData
 	 */
 	private SVGDocumentData getSVGData(StartElement element)
 	{
@@ -313,6 +348,16 @@ public class SVGContentBuilder
 		return doc_data;
 	}
 
+	/**
+	 * Build a group.<br>
+	 * Called for {@code <svg>} and {@code <g>} elements.
+	 * 
+	 * @param reader
+	 * @param element
+	 * @return
+	 * @throws IOException
+	 * @throws XMLStreamException
+	 */
 	private Pane buildGroup(XMLEventReader reader, StartElement element) throws IOException, XMLStreamException
 	{
 //		System.out.printf("SVGContentBuilder.buildGroup(%s, %s)\n",reader.toString(), element.toString());
@@ -323,7 +368,6 @@ public class SVGContentBuilder
 		Attribute id_attribute = element.getAttributeByName(new QName("id"));
 		if ( id_attribute != null )
 		{
-			
 			root.putGroup(id_attribute.getValue(), group);
 		}
 		
@@ -786,17 +830,15 @@ public class SVGContentBuilder
 	}
 	
 	/**
-	 * build def element
-	 * like
-	 * <defs>
+	 * Build def element, like:
+	 * {@code <defs>
 	 * 		<rect id="SVGID_1_" x="-40.7" y="-57" width="668.4" height="618"/>
-	 * </defs>
-	 * put data into map to draw in a <use> case, cause no cloning of Shapes is possible
+	 * </defs>}.<br>
+	 * Put data into map to draw in a {@code <use>} case, cloning of Shapes is not possible.
 	 * 
-	 * @param _element
-	 * @return	Node
-	 * @throws XMLStreamException 
-	 * @throws IOException 
+	 * @param	reader XMLEventReader
+	 * @throws	XMLStreamException 
+	 * @throws	IOException 
 	 */
 	private void buildDefs(XMLEventReader reader, StartElement defs_el) throws XMLStreamException, IOException
 	{
@@ -830,17 +872,15 @@ public class SVGContentBuilder
 	}
 	
 	/**
-	 * build clip path
-	 * like
-	 * <clipPath id="SVGID_2_">
+	 * build clip path, like:<br>
+	 * StartElement<clipPath id="SVGID_2_">
 	 * 		<use xlink:href="#SVGID_1_"  overflow="visible"/>
-	 * </clipPath>
+	 * </clipPath>\.
 	 * 
-	 * @param reader
-	 * @param defs
-	 * @return
-	 * @throws XMLStreamException
-	 * @throws IOException
+	 * @param	reader XMLEventReader
+	 * @param	clip_path_el StartElement
+	 * @throws	XMLStreamException
+	 * @throws	IOException
 	 */
 	private void buildClipPath(XMLEventReader reader, StartElement clip_path_el) throws XMLStreamException, IOException
 	{
@@ -891,13 +931,12 @@ public class SVGContentBuilder
 	}
 	
 	/**
-	 * handle a <use>
-	 * like
-	 * <use xlink:href="#SVGID_1_"  overflow="visible"/>
-	 * clone the node referenced by href id a put into clip_path
+	 * Handle a {@code <use>} element like:<br>
+	 * {@code <use xlink:href="#SVGID_1_"  overflow="visible"/>}<br>
+	 * Clone the node referenced by {@code href="id"} and put into clip_path
 	 * 
 	 * @param	reader XMLEventReader xml event reader
-	 * @param	_element StartElement the use node
+	 * @param	used_element StartElement the use node
 	 * @return	Use
 	 * @throws	XMLStreamException 
 	 * @throws	IOException 
@@ -995,10 +1034,10 @@ public class SVGContentBuilder
 	}
 
 	/**
-	 * use a (standalone) <use> Use
+	 * Use a (standalone) {@code <use>}.
 	 * 
 	 * @param	use Use the use to use
-	 * @return
+	 * @return	Node
 	 */
 	private Node useUse(Use use)
 	{
@@ -1008,14 +1047,14 @@ public class SVGContentBuilder
 	}
 	
 	/**
-	 * set the transform of a node
+	 * Set the transform of a node.
 	 * 
 	 * @param node Node the node to transform
 	 * @param element StartElement the xml element with transform infos
 	 */
 	void setTransform(Node node, StartElement element)
 	{
-		Attribute transformAttribute = element.getAttributeByName(new QName("transform"));
+		Attribute transformAttribute = element.getAttributeByName(new QName(Attributes.TRANSFORM));
 		if ( transformAttribute != null )
 		{
 			String transforms = transformAttribute.getValue();
@@ -1073,14 +1112,35 @@ public class SVGContentBuilder
 	}
 	
 	/**
-	 * set the opacity of a node
+	 * Set the display status of a node.
 	 * 
-	 * @param node Node the to set the opacity
-	 * @param element StartElement the xml element with opacity infos
+	 * @param	node Node the to set the opacity
+	 * @param	element StartElement the xml element with opacity infos
+	 */
+	void setDisplay(Node node, StartElement element)
+	{
+		Attribute displayAttribute = element.getAttributeByName(new QName(Attributes.DISPPLAY));
+		if ( displayAttribute != null )
+		{
+			// possible values:
+			// inline | block | list-item | run-in | compact | marker | table | inline-table | table-row-group | table-header-group | table-footer-group | table-row | table-column-group | table-column | table-cell | table-caption | none | inherit
+			// handled:
+			// none |
+			Display display = Display.forString(displayAttribute.getValue());
+			
+			if ( Display.NONE == display ) node.setVisible(false);
+		}
+	}
+	
+	/**
+	 * Set the opacity of a node.
+	 * 
+	 * @param	node Node the to set the opacity
+	 * @param	element StartElement the xml element with opacity infos
 	 */
 	void setOpacity(Node node, StartElement element)
 	{
-		Attribute opacityAttribute = element.getAttributeByName(new QName("opacity"));
+		Attribute opacityAttribute = element.getAttributeByName(new QName(Attributes.OPACITY));
 		if ( opacityAttribute != null )
 		{
 			double opacity = Double.parseDouble(opacityAttribute.getValue());
@@ -1108,21 +1168,32 @@ public class SVGContentBuilder
 	}
 
 	/**
-	 * set the style of a shape: color and border
-	 * by their xml attributes or applied css styles
+	 * Set the style of a shape: color and border.<br>
+	 * Use their xml attributes or applied css styles.
 	 * 
 	 * @param shape	Shape the shape to style
 	 * @param element StartElement the shape xml element to get the style infos of
 	 */
 	void setShapeStyle(Shape shape, StartElement element)
 	{
-		Attribute fillAttribute = element.getAttributeByName(new QName("fill"));
+		Attribute fillAttribute = element.getAttributeByName(new QName(Attributes.FILL));
 		if ( fillAttribute != null )
 		{
-			shape.setFill(expressPaint(fillAttribute.getValue()));
+			Attribute fillOpacityAttribute = element.getAttributeByName(new QName(Attributes.FILL_OPACITY));
+			String value = fillAttribute.getValue();
+			if ( fillOpacityAttribute != null )
+			{
+				// fillOpacityAttribute.getValue() \in [0,1]
+				int fillOpacityValue = (int) Math.round(Double.valueOf(fillOpacityAttribute.getValue())*255);
+				StringBuilder hexOpacity = new StringBuilder();
+				hexOpacity.append( Integer.toHexString(fillOpacityValue) );
+				if ( hexOpacity.length() == 1 ) hexOpacity.insert(0, "0");
+				value += hexOpacity.toString();
+			}
+			shape.setFill(expressPaint(value));
 		}
 
-		Attribute strokeAttribute = element.getAttributeByName(new QName("stroke"));
+		Attribute strokeAttribute = element.getAttributeByName(new QName(Attributes.STROKE));
 		if ( strokeAttribute != null )
 		{
 			shape.setStroke(expressPaint(strokeAttribute.getValue()));
@@ -1132,7 +1203,7 @@ public class SVGContentBuilder
 			shape.setStroke(null);
 		}
 
-		Attribute strokeWidthAttribute = element.getAttributeByName(new QName("stroke-width"));
+		Attribute strokeWidthAttribute = element.getAttributeByName(new QName(Attributes.STROKE_WIDTH));
 		if ( strokeWidthAttribute != null )
 		{
 			double strokeWidth = Double.parseDouble(strokeWidthAttribute.getValue());
@@ -1140,7 +1211,7 @@ public class SVGContentBuilder
 			shape.setStrokeWidth(strokeWidth);
 		}
 
-		Attribute styleAttribute = element.getAttributeByName(new QName("style"));
+		Attribute styleAttribute = element.getAttributeByName(new QName(Attributes.STYLE));
 		if ( styleAttribute != null )
 		{
 			String styles = styleAttribute.getValue();
@@ -1216,15 +1287,14 @@ public class SVGContentBuilder
 	}
 
 	/**
-	 * set the clip path of an element
-	 * if any 
+	 * Set the clip path of an element, if any.
 	 * 
-	 * @param node Node the node to clip
-	 * @param element StartElement the xml element with clip path id
+	 * @param	node Node the node to clip
+	 * @param	element StartElement the xml element with clip path id
 	 */
 	private void setClipPath(Node node, StartElement element)
 	{
-		Attribute clip_path_attribute = element.getAttributeByName(new QName("clip-path"));
+		Attribute clip_path_attribute = element.getAttributeByName(new QName(Attributes.CLIP_PATH));
 		
 		if ( clip_path_attribute == null ) return;
 //		System.out.printf("SVGContentBuilder.setClipPath(%s, %s)\n", node.toString(), element.toString());
@@ -1244,15 +1314,15 @@ public class SVGContentBuilder
 	}
 
 	/**
-	 * fill map with (id, node) pairs 
-	 * to easily access nodes lateron 
+	 * Fill map with (id, node) pairs<br>
+	 * to easily access nodes lateron. 
 	 * 
 	 * @param node Node the node to set the id of
 	 * @param element StartElement the xml element with id infos
 	 */
 	private void setNodeId(Node node, StartElement element)
 	{
-		Attribute idAttribute = element.getAttributeByName(new QName("id"));
+		Attribute idAttribute = element.getAttributeByName(new QName(Attributes.ID));
 		String id = null;
 		if ( idAttribute == null )
 		{

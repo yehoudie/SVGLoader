@@ -67,13 +67,13 @@ import javafx.scene.shape.Shape;
  *
  * note: There are many unsupport SVG element.
  * 
- * update by yehoudie: https://github.com/yehoudie/, http://yehoudie.de
- * - added basic clip-path support
- * - added view box clipping
- * - added dash array, dash offset support for line and polyline 
- * - switched Group to Pane because of layout/sizing errors:
- * 		Group seems to set the layout bounds to the minX element
- * - group id map is filled
+ * Updates by yehoudie: https://github.com/yehoudie/<br>
+ * - added basic clip-path support<br>
+ * - added view box clipping<br>
+ * - added dash array, dash offset support for line and polyline<br> 
+ * - switched Group to Pane because of layout/sizing errors:<br>
+ * 		Group seems to set the layout bounds to the minX element<br>
+ * - group id map is filled<br>
  */
 public class SVGContent extends Pane
 {
@@ -102,7 +102,7 @@ public class SVGContent extends Pane
 	}
 	
 	/**
-	 * get all the nodes of the svg content
+	 * Get all the nodes of the svg content.
 	 * 
 	 * @return	Map<String, Node>
 	 */
@@ -112,7 +112,7 @@ public class SVGContent extends Pane
 	}
 	
     /**
-     * put group in group map
+     * Put group in group map.
      *  
      * @param	id String group id
      * @param	group Pane the group to add
@@ -134,7 +134,7 @@ public class SVGContent extends Pane
 	}
 
 	/**
-	 * change fill of a node
+	 * Change fill of a node.
 	 * 
 	 * @param id String the node id
 	 * @param color String the rgb hex color
@@ -145,7 +145,7 @@ public class SVGContent extends Pane
 	}
 
 	/**
-	 * change fill of a {@code Node}
+	 * Change fill of a {@code Node}.
 	 * 
 	 * @param id String the node id
 	 * @param color Color the color
@@ -155,16 +155,16 @@ public class SVGContent extends Pane
 		Node node = getNode(id);
 		if ( node == null ) return;
 
-		colorNode(node, color);
+		colorFill(node, color);
 	}
 
 	/**
-	 * color a node
+	 * Color a node.
 	 * 
 	 * @param node Node the node to color
 	 * @param color Color the color to set
 	 */
-	public void colorNode(Node node, Color color)
+	public void colorFill(Node node, Color color)
 	{
 		Shape shape = (Shape) node;
 		shape.setFill(color);

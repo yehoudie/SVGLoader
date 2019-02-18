@@ -4,8 +4,8 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 
 /**
- * class to hold some svg document attributes 
- * just public methods
+ * Class to hold some svg document attributes.<br>
+ * Simply public fields.
  */
 public class SVGDocumentData
 {
